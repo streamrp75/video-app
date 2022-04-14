@@ -1,41 +1,16 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
-import { Field, ID, ObjectType } from '@nestjs/graphql';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@ObjectType()
 @Entity('users')
 export class UserEntity {
-  @Field(() => ID)
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Field()
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @Field()
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @Field()
   @Column()
   email: string;
 
-  @Field()
   @Column()
   username: string;
 
-  @Field()
   @Column()
   password: string;
-}
-@ObjectType()
-export class TokenEntity {
-  @Field()
-  token: string;
 }
