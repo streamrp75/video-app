@@ -49,7 +49,7 @@ export class UsersService {
     return videos;
   }
 
-  async getVideo(token, videoId): Promise<VideoEntity> {
+  async getVideo(token, videoId): Promise<any> {
     const user = await this.jwtService.verify(token);
     const userVideos = await this.userVideoRepository.find({ userId: user.id });
     let video;
@@ -61,7 +61,7 @@ export class UsersService {
       }),
     );
     if (video) {
-      return video;
+      return [video, user.id];
     } else {
       throw new HttpException('У вас нет такого видео', HttpStatus.BAD_REQUEST);
     }
@@ -78,26 +78,38 @@ export class UsersService {
     token,
   ): Promise<VideoEntity> {
     try {
-      const videoEntity = await this.getVideo(token, videoId);
+      const [videoEntity, userId] = await this.getVideo(token, videoId);
       console.log(videoEntity);
-      await this.filesService.updateFile(video, videoEntity.video);
-      videoEntity.title = videoInput.title;
-      return await this.videoRepository.save(videoEntity);
+      console.log(videoEntity.authorId != userId);
+      if (videoEntity.authorId == userId) {
+        await this.filesService.updateFile(video, videoEntity.video);
+        videoEntity.title = videoInput.title;
+        return await this.videoRepository.save(videoEntity);
+      } else {
+        throw 'Ошибка, вы не автор этого видео';
+      }
     } catch (e) {
-      throw new HttpException('Ошибка', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(e, HttpStatus.BAD_REQUEST);
     }
   }
 
   async deleteVideo(videoId, token): Promise<string> {
-    const video = await this.getVideo(token, videoId);
-    await this.filesService.deleteVideoFile(video.video);
-    console.log(video);
-    await this.videoRepository.remove(video);
-    const userVideos = await this.userVideoRepository.find({
-      videoId: videoId,
-    });
-    await this.userVideoRepository.remove(userVideos);
-    return 'Удалено';
+    try {
+      const [video, userId] = await this.getVideo(token, videoId);
+      if (video.authorId == userId) {
+        await this.filesService.deleteVideoFile(video.video);
+        await this.videoRepository.remove(video);
+        const userVideos = await this.userVideoRepository.find({
+          videoId: videoId,
+        });
+        await this.userVideoRepository.remove(userVideos);
+        return 'Удалено';
+      } else {
+        throw "Ошибка, вы не автор этого видео'";
+      }
+    } catch (e) {
+      throw new HttpException(e, HttpStatus.BAD_REQUEST);
+    }
   }
 
   async shareRights(token, videoId, email): Promise<string> {
