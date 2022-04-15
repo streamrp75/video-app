@@ -25,6 +25,7 @@ export class VideosService {
     const fileName = await this.filesService.createFile(video);
     const videoPost = await this.videoRepository.save({
       title: videoInput.title,
+      authorId: user.id,
       video: fileName,
     });
     return await this.userVideoRepository.save({
