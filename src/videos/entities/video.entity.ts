@@ -9,5 +9,8 @@ export class VideoEntity {
   title: string;
 
   @Column()
+  authorId: number;
+
+  @Column()
   video: string;
 }
