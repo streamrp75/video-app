@@ -7,9 +7,10 @@ import { FilesModule } from '../files/files.module';
 import { JwtModule } from '@nestjs/jwt';
 import { UsersModule } from '../users/users.module';
 import { UserVideoEntity } from './entities/user-video.entity';
+import { UserEntity } from '../users/entities/user.entity';
 @Module({
   imports: [
-    TypeOrmModule.forFeature([VideoEntity, UserVideoEntity]),
+    TypeOrmModule.forFeature([VideoEntity, UserVideoEntity, UserEntity]),
     FilesModule,
     JwtModule.register({
       secret: process.env.SECRET_KEY || 'SECRET_KEY',
