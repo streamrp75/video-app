@@ -5,15 +5,16 @@ import { UsersModule } from './users/users.module';
 import { VideosModule } from './videos/videos.module';
 import { AuthModule } from './auth/auth.module';
 import { FilesModule } from './files/files.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
+import { WinstonModule } from 'nest-winston';
+import { format, transports } from 'winston';
+import 'winston-daily-rotate-file';
 import * as path from 'path';
+import { APP_FILTER } from '@nestjs/core';
+import { HttpExceptionFilter } from './logger/logger';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '../.env' }),
-    ServeStaticModule.forRoot({
-      rootPath: path.resolve(__dirname, 'video_storage'),
-    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -34,6 +35,29 @@ import * as path from 'path';
     VideosModule,
     AuthModule,
     FilesModule,
+    WinstonModule.forRoot({
+      format: format.combine(
+        format.timestamp(),
+        format.errors({ stack: true }),
+        format.json(),
+      ),
+      transports: [
+        new transports.DailyRotateFile({
+          dirname: path.join(__dirname, 'logs'),
+          datePattern: 'yyyy-MM-dd',
+          filename: `%DATE%error.log`,
+          level: 'error',
+          maxFiles: '30d',
+        }),
+        new transports.Console({ level: 'info' }),
+      ],
+    }),
+  ],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
   ],
 })
 export class AppModule {}
